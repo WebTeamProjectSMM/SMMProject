@@ -15,9 +15,7 @@
 
 Make sure you have virtualenv installed, gonna assume you are on a Windows platform
 
-```
-    py -m pip install --user virtualenv
-```
+`py -m pip install --user virtualenv
 
 Navigate to the project folder, and activate virtualenv
 by typing the following into the command prompt
@@ -33,7 +31,9 @@ If you added more dependencies then do
 
 while you are still in your virtual environment
 
-###Don't forget to add your API keys to app.py
+### Don't forget to add your API keys to app.py
+
+### Callback URL is: http://127.0.0.1:8080/callback/twitter
 
 ## Start Server
 `python app.py`

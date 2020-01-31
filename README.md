@@ -15,7 +15,7 @@
 
 Make sure you have virtualenv installed, gonna assume you are on a Windows platform
 
-`py -m pip install --user virtualenv
+`py -m pip install --user virtualenv`
 
 Navigate to the project folder, and activate virtualenv
 by typing the following into the command prompt

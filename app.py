@@ -1,15 +1,12 @@
 import os
-from flask import Flask, render_template, url_for, redirect, \
-				  flash, send_from_directory, request, session, jsonify
+from flask import Flask,redirect, url_for
+from flask_dance.contrib.github import make_github_blueprint, github
+from flask_dance.contrib.twitter import make_twitter_blueprint , twitter
 
-from flask_login import LoginManager, UserMixin, login_user, \
-						logout_user, current_user
 
-from rauth import OAuth1Service
 
-from authentication import OAuthLogin
 
-app = Flask(__name__, template_folder='public')
+app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 'dumbkey'
 app.config['OAUTH_CREDENTIALS'] = {
@@ -20,64 +17,36 @@ app.config['OAUTH_CREDENTIALS'] = {
 		'secret': ''			
 	}
 }
+github_blueprint = make_github_blueprint(
+    client_id="139648bfd126633a1997",
+    client_secret="2eb5c5fd9e36c65f46dfc8e01a9967a024e35c62",
+)
 
-login_manager = LoginManager(app)
-login_manager.login_view = 'index'
+twiter_blueprint = make_twitter_blueprint(
+	api_key = "rWKhw4FaMIZzUiZrKKqbrFDnF",
+	api_secret = "aOoD9XZ80M2tqBvcZpmLyBLyHIF3dMiNbOb6pHusY31pZjFCl5",
+)
+
+app.register_blueprint(github_blueprint, url_prefix="/login")
+app.register_blueprint(twiter_blueprint, url_prefix="/twitter_login")
+
+@app.route("/github")
+def github_login(): 
+	if not github.authorized: 
+		return redirect(url_for("github.login"))
+	resp = github.get('/user')
+	assert resp.ok
+	return "You are @{login} on GitHub".format(login=resp.json()["login"])
+
+@app.route("/twitter")
+def twitter_login():
+	if not twitter.authorized:
+		return redirect(url_for("twitter.login"))
+
 
 # here in case we need it
 username = None
 
-# GET statuses/home_timeline.json
-@app.route('/api/<provider>/posts', methods=['GET'])
-def get_timeline(provider):
-	oauth = OAuthLogin.get_provider(provider)
-	return jsonify(oauth.get_tweets(10))
-
-# AUTHENTICATION
-@app.route('/api/twitter')
-def twitter_auth():
-	return redirect(url_for('oauth_authorize', provider='twitter'))
-
-# not implemented in authentication.py
-@app.route('/api/facebook')
-def facebook_auth():
-	return redirect(url_for('oauth_authorize', provider='facebook'))
-
-# not implemented in authentication.py
-@app.route('/api/instagram')
-def instagram_auth():
-	return redirect(url_for('oauth_authorize', provider='instagram'))
-
-@app.route('/authorize/<provider>')
-def oauth_authorize(provider):
-	if not current_user.is_anonymous:
-		return redirect(url_for('test'))
-	oauth = OAuthLogin.get_provider(provider)
-	return oauth.authorize()
-
-@app.route('/callback/<provider>')
-def oauth_callback(provider):
-	if not current_user.is_anonymous:
-		return redirect(url_for('test'))
-	oauth = OAuthLogin.get_provider(provider)
-	social_id, username = oauth.callback()
-
-	if social_id is None:
-		flash('Something went wrong with Authentication')
-		return redirect(url_for('index'))
-	return redirect(url_for('get_timeline', provider=provider))
-
-# catch all, must be after API calls, not sure if this works,
-# we'll find out later lmao
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def catch_all(path):
-	path_dir = os.path.abspath("client/public")
-	if path != "" and os.path.exists(os.path.join(path_dir, path)):
-		print('Path', os.path.join(path_dir), path)
-		return send_from_directory(os.path.join(path_dir), path)
-	else:
-		return send_from_directory(os.path.join(path_dir), 'index.html')
-
+#start flask app 
 if __name__ == "__main__":
 	app.run(debug=True, port=8080)
